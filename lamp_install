@@ -1,0 +1,148 @@
+#!/bin/bash
+#
+clear
+tput setaf 5
+echo "Tere tulemast menüüsse."
+echo "Tegevuste valik:"
+tput setaf 6
+echo "1 - Paigalda Apache2"
+echo "2 - Paigalda MySQL"
+echo "3 - Paigalda PHP"
+echo "4 - Paigalda PhpMyAdmin"
+echo "5 - Paigalda Wordpress"
+echo "6 - Paigalda kõik"
+echo "7 - Välju menüüst"
+tput setaf 5
+echo -n "Palun vali oma tegevus: "
+read asi
+tput sgr0
+
+if [ $asi = 1 ]; then
+apt --assume-yes update
+apt --assume-yes upgrade
+	if [ "dpkg-query -W -f='${Status}' apache2 | grep -c "ok installed"" == 1 ]; then
+	echo "Apache2 on juba paigaldatud!"
+	exit
+	else
+	echo "Apache2 paigaldamine..."
+	apt --assume-yes install apache2
+	echo "Apache2 paigaldatud!"
+	fi
+elif [ $asi = 2 ]; then
+apt --assume-yes update
+apt --assume-yes upgrade
+	if [ "dpkg-query -W -f='${Status}' mysql | grep -c "ok installed"" == 1 ]; then
+        	echo "MySQL on juba paigaldatud!"
+        	exit
+        else
+	echo "MySQL paigaldmine..."
+	apt --assume-yes install mysql-server
+	mysql_secure_installation
+	echo "MySQL paigaldatud"
+	fi
+elif [ $asi = 3 ]; then
+apt --assume-yes update
+apt --assume-yes upgrade
+	if [ "dpkg-query -W -f='${Status}' php | grep -c "ok installed""  == 1 ] && [ "dpkg-query -W -f='${Status}' libapache2-mod-php | grep -c "ok installed""  == 1 ] && [ "dpkg-query -W -f='${Status}' php-mcrypt | grep -c "ok installed"" == 1 ] && [ "dpkg-query -W -f='${Status}' php-mysql | grep -c "ok installed"" == 1 ] ; then
+                echo "PHP ja kõik vajalikud moodulid on juba paigaldatud!"
+                exit
+        else
+        echo "PHP paigaldmine..."
+        apt --assume-yes install php libapache2-mod-php php-mcrypt php-mysql
+        echo "PHP ja vajalikud moodulid paigaldatud"
+        fi
+
+elif [ $asi = 4 ]; then
+apt --assume-yes update
+apt --assume-yes upgrade
+	if [ "dpkg-query -W -f='${Status}' phpmyadmin | grep -c "ok installed"" == 1 ] && [ "dpkg-query -W -f='${Status}' apache2 | grep -c "ok installed""  == 1 ] && [ "dpkg-query -W -f='${Status}' mysql-server | grep -c "ok installed""  == 1 ] && [ "dpkg-query -W -f='${Status}' libapache2-mod-php | grep -c "ok installed""  == 1 ] && [ "dpkg-query -W -f='${Status}' php-mcrypt | grep -c "ok installed""  == 1 ] && [ "dpkg-query -W -f='${Status}' php-mysql | grep -c "ok installed""  == 1 ]; then
+                echo "PhpMyAdmin on juba paigaldatud!"
+                exit
+        else
+        echo "vajalike pakettide paigaldmine..."
+        apt --assume-yes install apache2 mysql-server php libapache2-mod-php php-mcrypt php-mysql phpmyadmin
+        mysql_secure_installation
+	echo "PhpMyAdmin paigaldatud"
+        fi
+
+elif [ $asi = 5 ]; then
+apt --assume-yes update
+apt --assume-yes upgrade
+echo "Sisesta soovitud WordPress andmebaasi nimi: "
+read dbname
+echo "Sisesta soovitud WordPress kasutaja nimi: "
+read dbuser
+echo "Sisesta soovitud andmebaasi parool: "
+read dbpass
+echo "Sisesta MySQL admin kasutaja nimi: "
+read dbroot
+echo "Sisesta MySQL admin kasutaja parool: "
+read dbrootpass
+
+	if [ "dpkg-query -W -f='${Status}' apache2 | grep -c "ok installed""  == 1 ] && [ "dpkg-query -W -f='${Status}' mysql-server | grep -c "ok installed""  == 1 ] && [ "dpkg-query -W -f='${Status}' libapache2-mod-php | grep -c "ok installed""  == 1 ] && [ "dpkg-query -W -f='${Status}' php-mcrypt | grep -c "ok installed""  == 1 ] && [ "dpkg-query -W -f='${Status}' php-mysql | grep -c "ok installed""  == 1 ]; then
+		echo "LAMP stack on juba paigaldatud, jätkan WordPressi paigaldamisega!"
+	else
+		echo "LAMP stack puudub! LAMP paigaldamine..."
+		apt --assume-yes install apache2 mysql-server php libapache2-mod-php php-mcrypt php-mysql
+		mysql_secure_installation
+	fi
+
+echo "WordPressi paigaldmine..."
+cd /var/www/html/
+curl -O https://wordpress.org/latest.tar.gz
+tar -zxvf latest.tar.gz
+cd wordpress
+cp wp-config-sample.php wp-config.php
+sed -e “s/database_name_here/$dbname/g” wp-config.php
+sed -e “s/username_here/$dbuser/g” wp-config.php
+sed “s/password_here/$dbpass/g” wp-config.php
+mkdir -p wp-content/uploads
+chmod 755 wp-content/uploads
+rm latest.tar.gz
+cd ~
+mysql -u$dbroot -p$dbrootpass -e "create database $dbname; GRANT ALL PRIVILEGES ON $dbname.* TO $dbuser@localhost IDENTIFIED BY '$dbpass'"
+echo "WordPress paigaldatud"
+
+elif [ $asi = 6 ]; then
+
+apt --assume-yes update
+apt --assume-yes upgrade
+
+echo "Sisesta soovitud WordPress andmebaasi nimi: "
+read dbname
+echo "Sisesta soovitud WordPress kasutaja nimi: "
+read dbuser
+echo "Sisesta soovitud andmebaasi parool: "
+read dbpass
+echo "Sisesta MySQL admin kasutaja nimi: "
+read dbroot
+echo "Sisesta MySQL admin kasutaja parool: "
+read dbrootpass
+
+if [ "dpkg-query -W -f='${Status}' phpmyadmin | grep -c "ok installed"" == 1 ] && [ "dpkg-query -W -f='${Status}' apache2 | grep -c "ok installed""  == 1 ] && [ "dpkg-query -W -f='${Status}' mysql-server | grep -c "ok installed""  == 1 ] && [ "dpkg-query -W -f='${Status}' libapache2-mod-php | grep -c "ok installed""  == 1 ] && [ "dpkg-query -W -f='${Status}' php-mcrypt | grep -c "ok installed""  == 1 ] && [ "dpkg-query -W -f='${Status}' php-mysql | grep -c "ok installed""  == 1 ]; then
+                echo "Kõik paketid on juba paigaldatud!"
+        else
+	echo "vajalike pakettide paigaldmine..."
+	apt --assume-yes install apache2 mysql-server php libapache2-mod-php php-mcrypt php-mysql phpmyadmin
+	mysql_secure_installation
+	fi
+
+cd /var/www/html/
+curl -O https://wordpress.org/latest.tar.gz
+tar -zxvf latest.tar.gz
+cd wordpress
+cp wp-config-sample.php wp-config.php
+sed -e “s/database_name_here/$dbname/g” wp-config.php
+sed -e “s/username_here/$dbuser/g” wp-config.php
+sed “s/password_here/$dbpass/g” wp-config.php
+mkdir -p wp-content/uploads
+chmod 755 wp-content/uploads
+rm latest.tar.gz
+mysql -u$dbroot -p$dbrootpass -e "create database $dbname; GRANT ALL PRIVILEGES ON $dbname.* TO $dbuser@localhost IDENTIFIED BY '$dbpass'"
+
+echo "LAMP stack, PMA ja WP paigaldatud!"
+elif [ $asi = 7 ]; then
+	exit
+else
+	./LAMP-install
+fi
