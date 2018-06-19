@@ -1,0 +1,49 @@
+#!/bin/bash
+#
+ 
+echo -n "Kasutaja kellele andmebaas luua:"
+read kasutaja
+ 
+parool=$(tr -cd '[:alnum:]' < /dev/urandom | fold -w10 | head -n1)
+echo "password=$parool" > .parool
+echo "$parool" > .parool2
+ 
+if [ ! -e /home/$kasutaja/.my.cnf ]; then
+ 
+    echo "Konfiguratsiooni faili ei leitud, loon andmebaasi"
+    echo -n "Palun sisesta andmebaasi Root kasutaja parool:"
+    read dbrootpasswd
+ 
+    echo "[client]" > /home/$kasutaja/.my.cnf
+    echo "user=$kasutaja" >> /home/$kasutaja/.my.cnf
+    cat .parool >> /home/$kasutaja/.my.cnf
+ 
+ 
+    echo -n "Sisesta uue andmebaasi nimi:"
+    read dbnimi
+    dbname="$kasutaja""_""$dbnimi"
+ 
+    for dbpass in $(cat .parool2)
+    do
+    mysql -uroot -p$dbrootpasswd -e "CREATE DATABASE $dbname; GRANT ALL PRIVILEGES ON $dbname.* TO $kasutaja@localhost IDENTIFIED BY '$dbpasswd'"
+    echo "Andmebaas on loodud"
+    done
+ 
+    chown "$kasutaja"":""$kasutaja" /home/$kasutaja/.my.cnf
+    chmod 0644 /home/$kasutaja/.my.cnf
+else
+    echo "Sisesta andmebaasi nimi:"
+    read dbnimi
+    dbname="$kasutaja""_""$dbnimi"
+ 
+    for dbpass in $(cat .parool2)
+    do
+    mysql -uroot -p$dbrootpasswd -e "CREATE DATABASE $dbname; GRANT ALL PRIVILEGES ON $dbname.* TO $kasutaja@localhost IDENTIFIED BY '$dbpass'"
+    done
+    echo "Andmebaas on loodud"
+ 
+chown "$kasutaja"":""$kasutaja" /home/$kasutaja/.my.cnf
+chmod 0644 /home/$kasutaja/.my.cnf
+rm .parool.tmp
+rm .parool2.tmp
+fi
