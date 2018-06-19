@@ -1,0 +1,18 @@
+#!/bin/bash
+ 
+kasutaja= $(whoami)
+echo -n "anbmebaas mida varundada:"
+read varudb
+dbname="$varudb_$kasutaja"
+aeg=$(date +"%Y-%m-%d.%H-%M")
+ 
+if [ ! -e /home/$kasutaja/.my.cnf ]; then
+    sh kasutajad_db
+else
+    mysqldump -u$kasutaja $dbname > /home/$kasutaja/$kp.$dbname.bcp
+    mkdir /mysql_backup
+    chown "$kasutaja"":""$kasutaja" /mysql_backup
+    tar -czvf /home/$kasutaja/$kp.$dbname.bcp.tar.gz /home/$kasutaja/$kp.$dbname.bcp
+    mv /home/$kasutaja/$kp.$dbname.bcp.tar.gz /mysql_backup/
+    rm /home/$kasutaja/$kp.$dbname.bcp
+fi
